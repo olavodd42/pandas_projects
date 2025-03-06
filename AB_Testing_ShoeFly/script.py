@@ -1,20 +1,28 @@
 import codecademylib3
 import pandas as pd
 
-ad_clicks = pd.read_csv('ad_clicks.csv')
-print(ad_clicks.head())
+import codecademylib3
+import pandas as pd
+
+try:
+    ad_clicks = pd.read_csv('ad_clicks.csv')
+    print(ad_clicks.head())
+except FileNotFoundError:
+    print("The file 'ad_clicks.csv' was not found.")
+except Exception as e:
+    print(f"An error occurred: {e}")
 
 print(ad_clicks.groupby('utm_source').user_id.count().reset_index())
-ad_clicks['is_click'] = ~(ad_clicks.ad_click_timestamp.isnull())
+ad_clicks['is_click'] = ad_clicks['ad_click_timestamp'].notnull()
 print(ad_clicks.head())
-clicks_by_source = ad_clicks.groupby(['utm_source', 'is_click']).user_id.count().reset_index()
-print(clicks_by_source)
+clicksBySource = ad_clicks.groupby(['utm_source', 'is_click']).user_id.count().reset_index()
+print(clicksBySource)
 
-clicks_pivot = ad_clicks.pivot_table(
+# Pivot the data to show the number of clicks and non-clicks for each utm_source
+clicks_pivot = clicksBySource.pivot(
   columns='is_click',
   index='utm_source',
   values='user_id',
-  aggfunc='count'
 ).reset_index()
 clicks_pivot.columns = ['utm_source', 'not_click', 'click']
 #print(clicks_pivot)
@@ -40,3 +48,22 @@ a_clicks = a_clicks.groupby(['day', 'is_click']).user_id.count().reset_index()
 b_clicks = b_clicks.groupby(['day', 'is_click']).user_id.count().reset_index()
 print(a_clicks)
 print(b_clicks)
+a_clicks_pivot = a_clicks.pivot(
+  columns='is_click',
+  index='day',
+  values='user_id'
+).reset_index()
+a_clicks_pivot['percent_clicked'] = round(a_clicks_pivot[True] / (a_clicks_pivot[True] + a_clicks_pivot[False]), 2)
+
+b_clicks_pivot = b_clicks.pivot(
+  columns='is_click',
+  index='day',
+  values='user_id'
+).reset_index()
+b_clicks_pivot['percent_clicked'] = round(b_clicks_pivot[True] / (b_clicks_pivot[True] + b_clicks_pivot[False]), 2)
+
+print(a_clicks_pivot)
+print(b_clicks_pivot)
+
+# Compare the results and make a recommendation based on the percent_clicked values.
+print(f'Based on the results, I would recommend experimental group A.')
